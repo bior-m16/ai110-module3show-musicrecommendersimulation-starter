@@ -119,7 +119,7 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     label_scale = 1.0
     if "energy" in user_prefs:
         energy_gap = abs(song["energy"] - user_prefs["energy"])
-        if energy_gap > ENERGY_TOLERANCE:
+        if energy_gap > ENERGY_TOLERANCE + 1e-9:  # epsilon: 0.8 - 0.5 is 0.30000000000000004
             label_scale = FAR_LABEL_SCALE
 
     if song["mood"] == user_prefs.get("mood"):
