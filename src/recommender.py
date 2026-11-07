@@ -35,6 +35,19 @@ MOOD_WEIGHT = 2.0
 GENRE_WEIGHT = 1.0
 ENERGY_WEIGHT = 3.0
 ACOUSTIC_WEIGHT = 1.0
+ENERGY_TOLERANCE = 0.30   # energy gap beyond which label matches count less
+FAR_LABEL_SCALE = 0.5      # multiplier applied to mood/genre bonuses past the tolerance
+
+
+def max_score(user_prefs: Dict) -> float:
+    """Return the highest score possible for a profile, counting only the preferences it sets."""
+    weights = {
+        "mood": MOOD_WEIGHT,
+        "genre": GENRE_WEIGHT,
+        "energy": ENERGY_WEIGHT,
+        "acousticness": ACOUSTIC_WEIGHT,
+    }
+    return sum(weight for key, weight in weights.items() if key in user_prefs)
 
 
 def _profile_to_prefs(user: UserProfile) -> Dict:
@@ -101,13 +114,25 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     score = 0.0
     reasons: List[str] = []
 
+    # If energy is far from the target, a label match is a weaker signal, so its
+    # bonus is scaled down. This stops mood/genre from overriding a clear energy request.
+    label_scale = 1.0
+    if "energy" in user_prefs:
+        energy_gap = abs(song["energy"] - user_prefs["energy"])
+        if energy_gap > ENERGY_TOLERANCE:
+            label_scale = FAR_LABEL_SCALE
+
     if song["mood"] == user_prefs.get("mood"):
-        score += MOOD_WEIGHT
-        reasons.append(f"mood match: {song['mood']} (+{MOOD_WEIGHT:.2f})")
+        points = MOOD_WEIGHT * label_scale
+        score += points
+        note = " [reduced: energy far from target]" if label_scale < 1 else ""
+        reasons.append(f"mood match: {song['mood']} (+{points:.2f}){note}")
 
     if song["genre"] == user_prefs.get("genre"):
-        score += GENRE_WEIGHT
-        reasons.append(f"genre match: {song['genre']} (+{GENRE_WEIGHT:.2f})")
+        points = GENRE_WEIGHT * label_scale
+        score += points
+        note = " [reduced: energy far from target]" if label_scale < 1 else ""
+        reasons.append(f"genre match: {song['genre']} (+{points:.2f}){note}")
 
     # Numeric features: reward closeness to the target, not bigger or smaller.
     for feature, weight in (("energy", ENERGY_WEIGHT), ("acousticness", ACOUSTIC_WEIGHT)):

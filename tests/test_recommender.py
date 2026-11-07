@@ -196,3 +196,31 @@ def test_recommender_class_explanation_lists_matches():
     rec = make_small_recommender()
     explanation = rec.explain_recommendation(user, rec.songs[0])
     assert "mood match" in explanation
+
+
+def test_score_song_far_energy_reduces_label_bonuses():
+    prefs = {"mood": "sad", "genre": "blues", "energy": 0.9}
+    near, _ = score_song(prefs, make_song(mood="sad", genre="blues", energy=0.85))
+    far, reasons = score_song(prefs, make_song(mood="sad", genre="blues", energy=0.40))
+    # Near: 2.0 + 1.0 + 3*(1-0.05) = 5.85. Far: (2.0 + 1.0) * 0.5 + 3*(1-0.5) = 3.0
+    assert near == pytest.approx(5.85)
+    assert far == pytest.approx(3.0)
+    assert any("reduced" in r for r in reasons)
+
+
+def test_score_song_label_bonus_unchanged_within_tolerance():
+    prefs = {"mood": "happy", "energy": 0.8}
+    score, reasons = score_song(prefs, make_song(energy=0.6))  # gap 0.2 <= 0.30
+    assert score == pytest.approx(2.0 + 3.0 * 0.8)
+    assert not any("reduced" in r for r in reasons)
+
+
+def test_conflicting_profile_is_now_a_close_race():
+    songs = [
+        make_song(id=1, title="Slow Sad", mood="sad", genre="blues", energy=0.40),
+        make_song(id=2, title="Loud Neutral", mood="intense", genre="rock", energy=0.91),
+    ]
+    prefs = {"mood": "sad", "genre": "blues", "energy": 0.9}
+    results = recommend_songs(prefs, songs, k=2)
+    # Labels no longer win by a wide margin: the two songs are nearly tied.
+    assert abs(results[0][1] - results[1][1]) < 0.1
