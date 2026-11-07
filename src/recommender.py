@@ -94,33 +94,33 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     Scores a single song against user preferences.
     Required by recommend_songs() and src/main.py
 
-    Recipe:
+    Recipe (max 7.0):
       +2.0 mood match (exact)
       +1.0 genre match (exact)
       +3.0 * (1 - |song energy - target energy|)
       +1.0 * (1 - |song acousticness - target|)   (only if the user gave one)
-    Returns (score, reasons).
+    Returns (score, reasons), where each reason names the points it added.
     """
     score = 0.0
     reasons: List[str] = []
 
     if song["mood"] == user_prefs.get("mood"):
         score += MOOD_WEIGHT
-        reasons.append(f"mood matches ({song['mood']})")
+        reasons.append(f"mood match: {song['mood']} (+{MOOD_WEIGHT:.2f})")
 
     if song["genre"] == user_prefs.get("genre"):
         score += GENRE_WEIGHT
-        reasons.append(f"genre matches ({song['genre']})")
+        reasons.append(f"genre match: {song['genre']} (+{GENRE_WEIGHT:.2f})")
 
-    if "energy" in user_prefs:
-        diff = abs(song["energy"] - user_prefs["energy"])
-        score += ENERGY_WEIGHT * (1 - diff)
-        reasons.append(f"energy {song['energy']:.2f} is {diff:.2f} from target")
-
-    if "acousticness" in user_prefs:
-        diff = abs(song["acousticness"] - user_prefs["acousticness"])
-        score += ACOUSTIC_WEIGHT * (1 - diff)
-        reasons.append(f"acousticness {song['acousticness']:.2f} is {diff:.2f} from target")
+    # Numeric features: reward closeness to the target, not bigger or smaller.
+    for feature, weight in (("energy", ENERGY_WEIGHT), ("acousticness", ACOUSTIC_WEIGHT)):
+        if feature in user_prefs:
+            diff = abs(song[feature] - user_prefs[feature])
+            points = weight * (1 - diff)
+            score += points
+            reasons.append(
+                f"{feature} {song[feature]:.2f} vs target {user_prefs[feature]:.2f} (+{points:.2f})"
+            )
 
     return score, reasons
 
@@ -129,10 +129,13 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
     """
     Functional implementation of the recommendation logic.
     Required by src/main.py
+
+    Scores every song with score_song, then returns the top k as
+    (song, score, explanation), highest score first.
     """
-    scored = []
-    for song in songs:
-        score, reasons = score_song(user_prefs, song)
-        scored.append((song, score, "; ".join(reasons)))
-    scored.sort(key=lambda item: item[1], reverse=True)
-    return scored[:k]
+    scored = [
+        (song, score, "; ".join(reasons))
+        for song in songs
+        for score, reasons in [score_song(user_prefs, song)]
+    ]
+    return sorted(scored, key=lambda item: item[1], reverse=True)[:k]
