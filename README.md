@@ -126,16 +126,48 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+Output of `python -m src.main` for the default pop/happy profile:
 
+```text
+Loading songs from data/songs.csv...
+Loaded songs: 20
+
+================================================================
+TOP RECOMMENDATIONS
+Profile: genre=pop, mood=happy, energy=0.8, acousticness=0.2
+================================================================
+1. Sunrise City - Neon Echo
+   Score: 6.92 / 7.00   (pop, happy)
+     - mood match: happy (+2.00)
+     - genre match: pop (+1.00)
+     - energy 0.82 vs target 0.80 (+2.94)
+     - acousticness 0.18 vs target 0.20 (+0.98)
+----------------------------------------------------------------
+2. Rooftop Lights - Indigo Parade
+   Score: 5.73 / 7.00   (indie pop, happy)
+     - mood match: happy (+2.00)
+     - energy 0.76 vs target 0.80 (+2.88)
+     - acousticness 0.35 vs target 0.20 (+0.85)
+----------------------------------------------------------------
+3. Gym Hero - Max Pulse
+   Score: 4.46 / 7.00   (pop, intense)
+     - genre match: pop (+1.00)
+     - energy 0.93 vs target 0.80 (+2.61)
+     - acousticness 0.05 vs target 0.20 (+0.85)
+----------------------------------------------------------------
+4. Concrete Crown - Dre Valen
+   Score: 3.86 / 7.00   (hip hop, confident)
+     - energy 0.78 vs target 0.80 (+2.94)
+     - acousticness 0.12 vs target 0.20 (+0.92)
+----------------------------------------------------------------
+5. Night Drive Loop - Neon Echo
+   Score: 3.83 / 7.00   (synthwave, moody)
+     - energy 0.75 vs target 0.80 (+2.85)
+     - acousticness 0.22 vs target 0.20 (+0.98)
+----------------------------------------------------------------
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
-```
+
+Sunrise City ranks first because it matches on mood, genre, energy and acousticness. Rooftop Lights follows on mood and energy alone. Gym Hero ranks third on genre and energy despite its "intense" mood, which is one of the biases noted above.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
 

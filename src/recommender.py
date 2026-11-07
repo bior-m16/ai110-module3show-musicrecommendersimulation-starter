@@ -38,7 +38,7 @@ ACOUSTIC_WEIGHT = 1.0
 
 
 def _profile_to_prefs(user: UserProfile) -> Dict:
-    """Convert a UserProfile into the dict format used by score_song."""
+    """Convert a UserProfile into the preference dict that score_song expects."""
     prefs = {
         "genre": user.favorite_genre,
         "mood": user.favorite_mood,
@@ -57,6 +57,7 @@ class Recommender:
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+        """Return the k songs that best match the user, highest score first."""
         prefs = _profile_to_prefs(user)
         ranked = sorted(
             self.songs,
@@ -66,15 +67,13 @@ class Recommender:
         return ranked[:k]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
+        """Return the scoring reasons for one song as a single readable string."""
         _, reasons = score_song(_profile_to_prefs(user), asdict(song))
         return "; ".join(reasons) if reasons else "No strong matches"
 
 
 def load_songs(csv_path: str) -> List[Dict]:
-    """
-    Loads songs from a CSV file, converting numeric columns to numbers.
-    Required by src/main.py
-    """
+    """Load songs from a CSV file as dicts, converting numeric columns to numbers."""
     print(f"Loading songs from {csv_path}...")
     int_fields = ("id",)
     float_fields = ("energy", "tempo_bpm", "valence", "danceability", "acousticness")
@@ -90,9 +89,7 @@ def load_songs(csv_path: str) -> List[Dict]:
 
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """
-    Scores a single song against user preferences.
-    Required by recommend_songs() and src/main.py
+    """Score one song against user preferences and return (score, reasons).
 
     Recipe (max 7.0):
       +2.0 mood match (exact)
@@ -126,9 +123,7 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
 
 def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
+    """Rank all songs for the user and return the top k as (song, score, explanation).
 
     Scores every song with score_song, then returns the top k as
     (song, score, explanation), highest score first.

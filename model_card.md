@@ -21,16 +21,20 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+The recommender works like a judge giving every song in the catalog a score out of 7, then handing back the highest scorers.
 
-Prompts:  
+**What it knows about a song:** its genre, its mood, how energetic it is (0 to 1), and how acoustic it is (0 to 1). **What it knows about you:** your favorite genre, your favorite mood, the energy level you want, and whether you prefer acoustic or electronic sounds.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+**How a song earns points:**
+- If the song's mood is the one you asked for, it gets 2 points.
+- If its genre is the one you asked for, it gets 1 point.
+- For energy, it gets up to 3 points based on how *close* the song is to your target, not on whether it is high or low. A song that lands right on your target gets all 3, and the further away it is in either direction, the fewer points it gets. Acousticness works the same way with up to 1 point.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+Then the system lines up all the songs from highest score to lowest and shows you the top five, along with the reasons each one scored the way it did ("mood match, +2.00", and so on).
+
+Energy gets the most weight because it is the only feature that comes in degrees, so it separates songs from each other. Mood counts for more than genre because mood describes the situation you are listening in, while genre is a broad label, and two songs in the same genre can feel completely different.
+
+**Changes from the starter:** the starter code only held placeholders. I implemented loading the song file, the scoring rule, the ranking step and the explanations, and I grew the catalog from 10 to 20 songs with new genres and moods.
 
 ---
 
